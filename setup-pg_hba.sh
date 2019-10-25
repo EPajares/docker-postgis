@@ -10,7 +10,9 @@ fi
 # This script will setup pg_hba.conf
 
 # Reconfigure pg_hba if environment settings changed
+mv /pg_hba.conf.template ${ROOT_CONF}
 cat ${ROOT_CONF}/pg_hba.conf.template > ${ROOT_CONF}/pg_hba.conf
+
 
 # Custom IP range via docker run -e (https://docs.docker.com/engine/reference/run/#env-environment-variables)
 # Usage is: docker run [...] -e ALLOW_IP_RANGE='192.168.0.0/16'

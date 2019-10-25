@@ -21,8 +21,28 @@ RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | a
 # The following packages have unmet dependencies:
 RUN apt-get update; apt-get install -y postgresql-client-11 postgresql-common postgresql-11 postgresql-11-postgis-2.5 postgresql-11-pgrouting netcat postgresql-11-ogr-fdw
 
+# Install further tools needed for GOAT
+RUN apt update \ 
+   &&  apt install osmosis -y \
+   &&  apt install osmctools -y \
+   &&  apt install osm2pgsql -y \
+   &&  apt install python3 -y \
+   &&  apt install python3-pip -y \
+   &&  apt install postgresql-plpython3-11 -y \
+   &&  apt install wget \
+   &&  pip3 install psycopg2-binary \
+   &&  pip3 install pyshp \
+   &&  pip3 install pyyaml 
+
+# Install specific version of osm2pgrouting
+RUN wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62/libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
+   && dpkg -i libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
+   && wget http://ftp.br.debian.org/debian/pool/main/o/osm2pgrouting/osm2pgrouting_2.2.0-1_amd64.deb \
+   && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb 
+
 # Open port 5432 so linked containers can see them
 EXPOSE 5432
+
 
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
@@ -37,6 +57,9 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 RUN update-locale ${LANG}
+
+# Copy customized pg_hba.conf.template
+COPY pg_hba.conf.template /pg_hba.conf.template
 
 # We will run any commands in this when the container starts
 ADD docker-entrypoint.sh /docker-entrypoint.sh

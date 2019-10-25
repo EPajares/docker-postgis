@@ -8,7 +8,9 @@ volumes:
 services:
 
   db:
-    image: kartoza/postgis:11.0-2.5
+    build: 
+      context: .
+    image: goat-database
     volumes:
       - postgis-data:/var/lib/postgresql
       - dbbackups:/backups
