@@ -4,7 +4,7 @@ FROM debian:$IMAGE_VERSION
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
 # Reset ARG for version
-ARG IMAGE_VERSION
+ARG IMAGE_VERSION=11.0-2.5
 RUN  export DEBIAN_FRONTEND=noninteractive
 ENV  DEBIAN_FRONTEND noninteractive
 RUN  dpkg-divert --local --rename --add /sbin/initctl
@@ -14,25 +14,30 @@ RUN apt-get -y update; apt-get -y install gnupg2 wget ca-certificates rpl pwgen 
 RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ ${IMAGE_VERSION}-pgdg main" > /etc/apt/sources.list.d/postgresql.list'
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add -
 
+
 #-------------Application Specific Stuff ----------------------------------------------------
 
 # We add postgis as well to prevent build errors (that we dont see on local builds)
 # on docker hub e.g.
 # The following packages have unmet dependencies:
-RUN apt-get update; apt-get install -y postgresql-client-11 postgresql-common postgresql-11 postgresql-11-postgis-2.5 postgresql-11-pgrouting netcat postgresql-11-ogr-fdw
+RUN apt update; apt install -y postgresql-client-11 postgresql-common postgresql-11 postgresql-11-postgis-2.5 postgresql-11-pgrouting netcat postgresql-11-ogr-fdw
+RUN wget https://omnidb.org/dist/2.16.0/omnidb-plugin_2.16.0-debian-amd64.deb
+RUN dpkg -i omnidb-plugin_2.16.0-debian-amd64.deb
+
 
 # Install further tools needed for GOAT
-RUN apt update \ 
-   &&  apt install osmosis -y \
+RUN  apt install osmosis -y \
    &&  apt install osmctools -y \
    &&  apt install osm2pgsql -y \
    &&  apt install python3 -y \
    &&  apt install python3-pip -y \
    &&  apt install postgresql-plpython3-11 -y \
+   &&  apt install nano \
    &&  apt install wget \
    &&  pip3 install psycopg2-binary \
    &&  pip3 install pyshp \
-   &&  pip3 install pyyaml 
+   &&  pip3 install pyyaml \
+   &&  pip3 install osm_humanized_opening_hours
 
 # Install specific version of osm2pgrouting
 RUN wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62/libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
