@@ -21,8 +21,6 @@ RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | a
 # on docker hub e.g.
 # The following packages have unmet dependencies:
 RUN apt update; apt install -y postgresql-client-11 postgresql-common postgresql-11 postgresql-11-postgis-2.5 postgresql-11-pgrouting netcat postgresql-11-ogr-fdw
-RUN wget https://omnidb.org/dist/2.16.0/omnidb-plugin_2.16.0-debian-amd64.deb
-RUN dpkg -i omnidb-plugin_2.16.0-debian-amd64.deb
 
 
 # Install further tools needed for GOAT
