@@ -1,6 +1,4 @@
-#--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-ARG IMAGE_VERSION=buster
-FROM debian:$IMAGE_VERSION
+FROM debian:buster-slim
 LABEL  Maintainer="Tim Sutton <tim@kartoza.com>"
 
 # Reset ARG for version
