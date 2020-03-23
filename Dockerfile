@@ -26,19 +26,21 @@ RUN apt update \
  RUN  apt install -y osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
    && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours
 
+
+# Install specific version of osm2pgrouting
+# TODO: Check if this can be installed via apt and do  set version as env var
+RUN cd /tmp/ && wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62/libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
+   && dpkg -i libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
+   && wget http://ftp.br.debian.org/debian/pool/main/o/osm2pgrouting/osm2pgrouting_2.2.0-1_amd64.deb \
+   && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb \
+   && rm -rf /tmp/*
+
 # Install PLV8
 RUN cd /tmp/ &&  wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
    && tar -xvzf "v${PLV8_VERSION}.tar.gz" \
    && cd "plv8-${PLV8_VERSION}" \
    && make && make install
 
-
-# Install specific version of osm2pgrouting
-# TODO: Check if this can be installed via apt and do  set version as env var
-RUN wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62/libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
-   && dpkg -i libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
-   && wget http://ftp.br.debian.org/debian/pool/main/o/osm2pgrouting/osm2pgrouting_2.2.0-1_amd64.deb \
-   && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb
 
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
