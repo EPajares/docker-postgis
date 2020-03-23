@@ -1,50 +1,47 @@
 FROM debian:buster-slim
 LABEL  Maintainer="Tim Sutton <tim@kartoza.com>"
 
-# Reset ARG for version
-ARG IMAGE_VERSION=11.0-2.5
-RUN  export DEBIAN_FRONTEND=noninteractive
-ENV  DEBIAN_FRONTEND noninteractive
-RUN  dpkg-divert --local --rename --add /sbin/initctl
+# TODO: Add option for ARGs
+ENV PG_MAJOR=11
+ENV POSTGIS_VERSION=3
+ENV PLV8_VERSION=2.3.14
+ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
 
-RUN apt-get -y update; apt-get -y install gnupg2 wget ca-certificates rpl pwgen gdal-bin
+# Disable inadvert daemon starts and disable install recommends
+RUN  dpkg-divert --local --rename --add /sbin/initctl \
+   && echo 'apt::install-recommends "false";' >> /etc/apt/apt.conf.d/01-no-install-recommends
 
-RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ ${IMAGE_VERSION}-pgdg main" > /etc/apt/sources.list.d/postgresql.list'
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add -
+# Configure PostgreSQL repotirory
+# TODO: check if `gdal-bin` is really necessary
+RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl pwgen git \
+   && echo "deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main"  > /etc/apt/sources.list.d/postgresql.list \
+   && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add -
 
+# Install Set versions
+RUN apt update \
+   && apt install -y "postgresql-client-${PG_MAJOR}" "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}" \
+   "postgresql-${PG_MAJOR}-postgis-${POSTGIS_VERSION}" "postgresql-${PG_MAJOR}-pgrouting" \
+   "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}"
 
-#-------------Application Specific Stuff ----------------------------------------------------
+ RUN  apt install -y osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
+   && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours
 
-# We add postgis as well to prevent build errors (that we dont see on local builds)
-# on docker hub e.g.
-# The following packages have unmet dependencies:
-RUN apt update; apt install -y postgresql-client-11 postgresql-common postgresql-11 postgresql-11-postgis-2.5 postgresql-11-pgrouting netcat postgresql-11-ogr-fdw
+# Install PLV8
+RUN cd /tmp/ &&  wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
+   && tar -xvzf "v${PLV8_VERSION}.tar.gz" \
+   && cd "plv8-${PLV8_VERSION}" \
+   && make && make install
 
-
-# Install further tools needed for GOAT
-RUN  apt install osmosis -y \
-   &&  apt install osmctools -y \
-   &&  apt install osm2pgsql -y \
-   &&  apt install python3 -y \
-   &&  apt install python3-pip -y \
-   &&  apt install postgresql-plpython3-11 -y \
-   &&  apt install nano \
-   &&  apt install wget \
-   &&  pip3 install psycopg2-binary \
-   &&  pip3 install pyshp \
-   &&  pip3 install pyyaml \
-   &&  pip3 install osm_humanized_opening_hours
 
 # Install specific version of osm2pgrouting
+# TODO: Check if this can be installed via apt and do  set version as env var
 RUN wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62/libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
    && dpkg -i libboost-program-options1.62.0_1.62.0+dfsg-5_amd64.deb \
    && wget http://ftp.br.debian.org/debian/pool/main/o/osm2pgrouting/osm2pgrouting_2.2.0-1_amd64.deb \
-   && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb 
+   && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb
 
 # Open port 5432 so linked containers can see them
 EXPOSE 5432
-
-
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
 ADD env-data.sh /env-data.sh
