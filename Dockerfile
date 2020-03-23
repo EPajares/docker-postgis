@@ -21,9 +21,8 @@ RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl
 RUN apt update \
    && apt install -y "postgresql-client-${PG_MAJOR}" "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}" \
    "postgresql-${PG_MAJOR}-postgis-${POSTGIS_VERSION}" "postgresql-${PG_MAJOR}-pgrouting" \
-   "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}"
-
- RUN  apt install -y osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
+   "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}" \
+   osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
    && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours
 
 
