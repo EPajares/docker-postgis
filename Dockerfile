@@ -40,8 +40,6 @@ RUN wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62/libboost-pr
    && wget http://ftp.br.debian.org/debian/pool/main/o/osm2pgrouting/osm2pgrouting_2.2.0-1_amd64.deb \
    && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb
 
-# Open port 5432 so linked containers can see them
-EXPOSE 5432
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
 ADD env-data.sh /env-data.sh
