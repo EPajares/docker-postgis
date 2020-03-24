@@ -41,7 +41,7 @@ RUN apt install -y python2 \
    && cd /tmp/ &&  wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
    && tar -xvzf "v${PLV8_VERSION}.tar.gz" \
    && cd "plv8-${PLV8_VERSION}" \
-   && make && make install \
+   && GYP_CHROMIUM_NO_ACTION=0 make && make install \
    && apt purge -y python2 && rm -rf /tmp/*
 
 
