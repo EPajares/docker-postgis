@@ -4,7 +4,7 @@ LABEL  Maintainer="Tim Sutton <tim@kartoza.com>"
 # TODO: Add option for ARGs
 ENV PG_MAJOR=11
 ENV POSTGIS_VERSION=3
-ENV PLV8_VERSION=2.3.14
+ENV PLV8_VERSION=2.3.13
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
 
 # Disable inadvert daemon starts and disable install recommends
@@ -35,14 +35,18 @@ RUN cd /tmp/ && wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62
    && rm -rf /tmp/*
 
 # Install PLV8
-RUN apt install -y python2 \
+RUN apt install -y python \
    && git config --global user.email "database@goat.io" \
    && git config --global user.name "Goat Project" \
    && cd /tmp/ &&  wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
    && tar -xvzf "v${PLV8_VERSION}.tar.gz" \
    && cd "plv8-${PLV8_VERSION}" \
-   && make static && make install \
-   && apt purge -y python2 && rm -rf /tmp/*
+   && make static \
+   && make install \
+   && strip /usr/lib/postgresql/${PG_MAJOR}/lib/plv8.so \
+   && apt purge -y python \
+   && apt-get autoremove -y \
+   && rm -rf /tmp/* /var/lib/apt/lists/*
 
 
 # Run any additional tasks here that are too tedious to put in
