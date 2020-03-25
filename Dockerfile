@@ -1,10 +1,44 @@
-FROM debian:buster-slim
-LABEL  Maintainer="Tim Sutton <tim@kartoza.com>"
+ARG PG_MAJOR=11
 
-# TODO: Add option for ARGs
-ENV PG_MAJOR=11
-ENV POSTGIS_VERSION=3
-ENV PLV8_VERSION=2.3.13
+FROM postgres:${PG_MAJOR} AS plv8builder
+
+# Args need to be repeated for scope
+ARG PLV8_VERSION=2.3.14
+ARG PG_MAJOR=11
+
+RUN echo 'apt::install-recommends "false";' >> /etc/apt/apt.conf.d/01-no-install-recommends \
+   && apt update  && apt install -y build-essential \
+    ca-certificates \
+    wget \
+    git-core \
+    python \
+    gpp \
+    cpp \
+    pkg-config \
+    apt-transport-https \
+    cmake \
+    libc++-dev \
+    "postgresql-server-dev-${PG_MAJOR}" \
+    "libc++1" \
+  && mkdir -p /tmp/build \
+  && cd /tmp/build \
+  && wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
+  && tar -xzf "v${PLV8_VERSION}.tar.gz" \
+  && cd "/tmp/build/plv8-${PLV8_VERSION}" \
+  && make static \
+  && make install \
+  && strip "/usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so"
+
+
+# Use a brand new images
+FROM debian:buster-slim
+LABEL  Maintainer="Alfredo Palhares <alfredo@palhares.me>"
+
+# There need to be repeadted for scope
+ARG PG_MAJOR=11
+ARG PLV8_VERSION=2.3.14
+ARG POSTGIS_VERSION=3
+
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
 
 # Disable inadvert daemon starts and disable install recommends
@@ -13,7 +47,7 @@ RUN  dpkg-divert --local --rename --add /sbin/initctl \
 
 # Configure PostgreSQL repotirory
 # TODO: check if `gdal-bin` is really necessary
-RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl pwgen git \
+RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl pwgen git libc++1 \
    && echo "deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main"  > /etc/apt/sources.list.d/postgresql.list \
    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add -
 
@@ -34,20 +68,8 @@ RUN cd /tmp/ && wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62
    && dpkg -i osm2pgrouting_2.2.0-1_amd64.deb \
    && rm -rf /tmp/*
 
-# Install PLV8
-RUN apt install -y python \
-   && git config --global user.email "database@goat.io" \
-   && git config --global user.name "Goat Project" \
-   && cd /tmp/ &&  wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
-   && tar -xvzf "v${PLV8_VERSION}.tar.gz" \
-   && cd "plv8-${PLV8_VERSION}" \
-   && make static \
-   && make install \
-   && strip /usr/lib/postgresql/${PG_MAJOR}/lib/plv8.so \
-   && apt purge -y python \
-   && apt-get autoremove -y \
-   && rm -rf /tmp/* /var/lib/apt/lists/*
-
+# COPY PLV8
+COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so
 
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
