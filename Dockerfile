@@ -89,13 +89,13 @@ RUN update-locale ${LANG}
 COPY pg_hba.conf.template /pg_hba.conf.template
 
 # We will run any commands in this when the container starts
-ADD docker-entrypoint.sh /docker-entrypoint.sh
-ADD setup-conf.sh /
-ADD setup-database.sh /
-ADD setup-pg_hba.sh /
-ADD setup-replication.sh /
-ADD setup-ssl.sh /
-ADD setup-user.sh /
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY setup-conf.sh /
+COPY setup-database.sh /
+COPY setup-pg_hba.sh /
+COPY setup-replication.sh /
+COPY setup-ssl.sh /
+COPY setup-user.sh /
 RUN chmod +x /docker-entrypoint.sh
 
 ENTRYPOINT /docker-entrypoint.sh
