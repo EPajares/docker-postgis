@@ -4,7 +4,7 @@ FROM postgres:${PG_MAJOR} AS plv8builder
 
 # Args need to be repeated for scope
 ARG PLV8_VERSION=2.3.14
-ARG PG_MAJOR=11
+ARG PG_MAJOR=12
 
 RUN echo 'apt::install-recommends "false";' >> /etc/apt/apt.conf.d/01-no-install-recommends \
    && apt update  && apt install -y build-essential \
@@ -25,8 +25,8 @@ RUN echo 'apt::install-recommends "false";' >> /etc/apt/apt.conf.d/01-no-install
   && wget -q "https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz" \
   && tar -xzf "v${PLV8_VERSION}.tar.gz" \
   && cd "/tmp/build/plv8-${PLV8_VERSION}" \
-  && make static \
-  && make install \
+  && make static
+RUN make install \
   && strip "/usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so"
 
 
@@ -35,9 +35,9 @@ FROM debian:buster-slim
 LABEL  Maintainer="Alfredo Palhares <alfredo@palhares.me>"
 
 # There need to be repeadted for scope
-ARG PG_MAJOR=11
+ARG PG_MAJOR=12
 ARG PLV8_VERSION=2.3.14
-ARG POSTGIS_VERSION=3
+ARG POSTGIS_VERSION=2.5
 
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
 
