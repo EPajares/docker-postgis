@@ -18,6 +18,8 @@ RUN echo 'apt::install-recommends "false";' >> /etc/apt/apt.conf.d/01-no-install
     apt-transport-https \
     cmake \
     libc++-dev \
+    libc++abi-dev \
+    libtinfo5 \
     "postgresql-server-dev-${PG_MAJOR}" \
     "libc++1" \
   && mkdir -p /tmp/build \
@@ -48,7 +50,7 @@ RUN  dpkg-divert --local --rename --add /sbin/initctl \
 
 # Configure PostgreSQL repotirory
 # TODO: check if `gdal-bin` is really necessary
-RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl pwgen git libc++1 \
+RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl pwgen git libc++1 libtinfo5 libc++abi1 \
    && echo "deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main"  > /etc/apt/sources.list.d/postgresql.list \
    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add -
 
