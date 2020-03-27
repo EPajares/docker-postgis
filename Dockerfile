@@ -42,7 +42,14 @@ ARG PG_MAJOR=12
 ARG PLV8_VERSION=2.3.14
 ARG POSTGIS_VERSION=2.5
 
+# Its important to have the Variables in runtime
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
+ENV PG_VERSION=${PG_MAJOR}
+ENV PGIS_VERSION=${POSTGIS_VERSION}
+
+LABEL Version.PostgreSQL="${PG_VERSION}"
+LABEL Version.PostGIS="${PGIS_VERSION}"
+LABEL Version.PLV8="${PLV8_VERSION}"
 
 # Disable inadvert daemon starts and disable install recommends
 RUN  dpkg-divert --local --rename --add /sbin/initctl \
@@ -79,8 +86,8 @@ COPY --from=plv8builder /usr/share/postgresql/${PG_MAJOR}/extension /usr/share/p
 
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
-ADD env-data.sh /env-data.sh
-ADD setup.sh /setup.sh
+COPY env-data.sh /env-data.sh
+COPY setup.sh /setup.sh
 RUN chmod +x /setup.sh
 RUN /setup.sh
 
