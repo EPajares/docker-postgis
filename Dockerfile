@@ -26,7 +26,8 @@ RUN echo 'apt::install-recommends "false";' >> /etc/apt/apt.conf.d/01-no-install
   && tar -xzf "v${PLV8_VERSION}.tar.gz" \
   && cd "/tmp/build/plv8-${PLV8_VERSION}" \
   && make static
-RUN make install \
+RUN cd "/tmp/build/plv8-${PLV8_VERSION}" \
+  && make install \
   && strip "/usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so"
 
 
