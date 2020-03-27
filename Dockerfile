@@ -1,4 +1,4 @@
-ARG PG_MAJOR=11
+ARG PG_MAJOR=12
 
 FROM postgres:${PG_MAJOR} AS plv8builder
 
@@ -71,6 +71,9 @@ RUN cd /tmp/ && wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62
 
 # COPY PLV8
 COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so
+COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode
+COPY --from=plv8builder /usr/share/postgresql/${PG_MAJOR}/extension /usr/share/postgresql/${PG_MAJOR}/extension
+
 
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
