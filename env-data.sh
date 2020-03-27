@@ -14,7 +14,7 @@ LOCALONLY="-c listen_addresses='127.0.0.1'"
 PG_BASEBACKUP="/usr/bin/pg_basebackup"
 PROMOTE_FILE="/tmp/pg_promote_master"
 PGSTAT_TMP="/var/run/postgresql/"
-PG_PID="/var/run/postgresql/11-main.pid"
+PG_PID="/var/run/postgresql/${PG_VERSION}-main.pid"
 
 
 # Make sure we have a user set up
