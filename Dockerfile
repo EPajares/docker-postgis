@@ -40,7 +40,7 @@ LABEL  Maintainer="Alfredo Palhares <alfredo@palhares.me>"
 # There need to be repeadted for scope
 ARG PG_MAJOR=12
 ARG PLV8_VERSION=2.3.14
-ARG POSTGIS_VERSION=2.5
+ARG POSTGIS_VERSION=3
 
 # Its important to have the Variables in runtime
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
@@ -67,7 +67,7 @@ RUN apt update \
    "postgresql-${PG_MAJOR}-postgis-${PGIS_VERSION}" "postgresql-${PG_MAJOR}-pgrouting" \
    "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}" \
    osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
-   && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours
+   && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours boto3
 
 
 # Install specific version of osm2pgrouting
