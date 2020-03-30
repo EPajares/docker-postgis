@@ -80,8 +80,8 @@ RUN cd /tmp/ && wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62
 
 # There is the wrong version of postgis being installed as dependency
 # Currently best way is to purge afterwards
-RUN wrongDep=$(dpkg -l | grep  postgresql-${PG_VERSION}-postgis- | grep --invert-match  postgresql-${PG_VERSION}-postgis-${PGIS_VERSION}   | cut -d ' ' -f 3) \
-   && apt purge -y $wrongDep
+#RUN wrongDep=$(dpkg -l | grep  postgresql-${PG_VERSION}-postgis- | grep --invert-match  postgresql-${PG_VERSION}-postgis-${PGIS_VERSION}   | cut -d ' ' -f 3) \
+#   && apt purge -y $wrongDep
 
 # COPY PLV8
 COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so
