@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 
-DATADIR="/var/lib/postgresql/11/main"
-ROOT_CONF="/etc/postgresql/11/main"
+DATADIR="/var/lib/postgresql/${PG_VERSION}/main"
+ROOT_CONF="/etc/postgresql/${PG_VERSION}/main"
+PG_ENV="$ROOT_CONF/environment"
 CONF="$ROOT_CONF/postgresql.conf"
 WAL_ARCHIVE="/opt/archivedir"
 RECOVERY_CONF="$ROOT_CONF/recovery.conf"
-POSTGRES="/usr/lib/postgresql/11/bin/postgres"
-INITDB="/usr/lib/postgresql/11/bin/initdb"
-SQLDIR="/usr/share/postgresql/11/contrib/postgis-2.5/"
+POSTGRES="/usr/lib/postgresql/${PG_VERSION}/bin/postgres"
+INITDB="/usr/lib/postgresql/${PG_VERSION}/bin/initdb"
+SQLDIR="/usr/share/postgresql/${PG_VERSION}/contrib/postgis-${PGIS_VERSION}/"
 SETVARS="POSTGIS_ENABLE_OUTDB_RASTERS=1 POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL"
 LOCALONLY="-c listen_addresses='127.0.0.1'"
 PG_BASEBACKUP="/usr/bin/pg_basebackup"
 PROMOTE_FILE="/tmp/pg_promote_master"
 PGSTAT_TMP="/var/run/postgresql/"
-PG_PID="/var/run/postgresql/11-main.pid"
+PG_PID="/var/run/postgresql/${PG_VERSION}-main.pid"
 
 
 # Make sure we have a user set up
@@ -94,10 +95,12 @@ if [ -z "${SSL_KEY_FILE}" ]; then
 fi
 
 if [ -z "${POSTGRES_MULTIPLE_EXTENSIONS}" ]; then
-  POSTGRES_MULTIPLE_EXTENSIONS='postgis,hstore,postgis_topology'
+  POSTGRES_MULTIPLE_EXTENSIONS='postgis,hstore,postgis_topology,plv8'
 fi
 
-
+if [ -z "${ALLOW_IP_RANGE}" ]; then
+  ALLOW_IP_RANGE='0.0.0.0/0'
+fi
 if [ -z "${DEFAULT_ENCODING}" ]; then
   DEFAULT_ENCODING="UTF8"
 fi
@@ -106,6 +109,18 @@ if [ -z "${DEFAULT_COLLATION}" ]; then
 fi
 if [ -z "${DEFAULT_CTYPE}" ]; then
   DEFAULT_CTYPE="en_US.UTF-8"
+fi
+
+if [ -z "${REPLICATION_USER}" ]; then
+  REPLICATION_USER=replicator
+fi
+
+if [ -z "${REPLICATION_PASS}" ]; then
+  REPLICATION_PASS=replicator
+fi
+
+if [ -z "$EXTRA_CONF" ]; then
+    EXTRA_CONF=""
 fi
 
 # Compatibility with official postgres variable
