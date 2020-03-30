@@ -1,14 +1,8 @@
-# docker-postgis
+# Goat Database
 
+A container database to run [goat](https://open-accessibility.org/)
 
-
-A simple docker container that runs PostGIS
-
-Visit our page on the docker hub at: https://hub.docker.com/r/kartoza/postgis/
-
-There are a number of other docker postgis containers out there. This one
-differentiates itself by:
-
+This image is really tough to be used within the project, but it can be used idependently:
 * provides ssl support out of the box
 * connections are restricted to the docker subnet
 * a default database 'gis' is created for you so you can use this container 'out of the
@@ -19,8 +13,8 @@ differentiates itself by:
 * Gdal drivers automatically registered for pg raster
 * Support for out-of-db rasters
 
-We will work to add more security features to this container in the future with 
-the aim of making a PostGIS image that is ready to be used in a production 
+We will work to add more security features to this container in the future with
+the aim of making a PostGIS image that is ready to be used in a production
 environment (though probably not for heavy load databases).
 
 There is a nice 'from scratch' tutorial on using this docker image on Alex Urquhart's
@@ -31,11 +25,11 @@ just getting started with docker, PostGIS and QGIS, we really recommend that you
 
 The following convention is used for tagging the images we build:
 
-kartoza/postgis:[postgres_version]-[postgis-version]
+goatcommunity/database:[postgres_version]-[postgis-version]-[plv8-version]-[revision]
 
 So for example:
 
-``kartoza/postgis:9.6-2.4`` Provides PostgreSQL 9.6, PostGIS 2.4
+``goatcommunity/postgis:12-2.5-2.3.14-1`` Provides PostgreSQL 12 PLV8 2.3.14
 
 **Note:** We highly recommend that you use tagged versions because
 successive minor versions of PostgreSQL write their database clusters
@@ -53,43 +47,12 @@ get our docker trusted build like this:
 
 
 ```
-docker pull kartoza/postgis
-```
-
-To build the image yourself without apt-cacher (also consumes more bandwidth
-since deb packages need to be refetched each time you build) do:
-
-```
-docker build -t kartoza/postgis git://github.com/kartoza/docker-postgis
-```
-
-To build with apt-cacher (and minimise download requirements) you need to
-clone this repo locally first and modify the contents of 71-apt-cacher-ng to
-match your cacher host. Then build using a local url instead of directly from
-github.
-
-```
-git clone git://github.com/kartoza/docker-postgis
-```
-
-Now edit ``71-apt-cacher-ng`` then do:
-
-```
-docker build -t kartoza/postgis .
-```
-
-## Run
-
-
-To create a running container do:
-
-```
-sudo docker run --name "postgis" -p 25432:5432 -d -t kartoza/postgis
+docker pull goat-community/database
 ```
 
 ## Environment variables
 
-You can also use the following environment variables to pass a 
+You can also use the following environment variables to pass a
 user name, password and/or default database name(or multiple databases comma separated).
 
 * -e POSTGRES_USER=<PGUSER> 
