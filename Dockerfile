@@ -40,7 +40,7 @@ LABEL  Maintainer="Alfredo Palhares <alfredo@palhares.me>"
 # There need to be repeadted for scope
 ARG PG_MAJOR=12
 ARG PLV8_VERSION=2.3.14
-ARG POSTGIS_VERSION=3
+ARG POSTGIS_VERSION=2.5
 
 # Its important to have the Variables in runtime
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
@@ -65,7 +65,7 @@ RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl
 RUN apt update \
    && apt install -y "postgresql-client-${PG_MAJOR}" "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}" \
    "postgresql-${PG_MAJOR}-postgis-${PGIS_VERSION}" "postgresql-${PG_MAJOR}-pgrouting" \
-   "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}" \
+   "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR} postgis" \
    osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
    && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours boto3
 
@@ -80,8 +80,8 @@ RUN cd /tmp/ && wget http://security.ubuntu.com/ubuntu/pool/universe/b/boost1.62
 
 # There is the wrong version of postgis being installed as dependency
 # Currently best way is to purge afterwards
-#RUN wrongDep=$(dpkg -l | grep  postgresql-${PG_VERSION}-postgis- | grep --invert-match  postgresql-${PG_VERSION}-postgis-${PGIS_VERSION}   | cut -d ' ' -f 3) \
-#   && apt purge -y $wrongDep
+RUN wrongDep=$(dpkg -l | grep  postgresql-${PG_VERSION}-postgis- | grep --invert-match  postgresql-${PG_VERSION}-postgis-${PGIS_VERSION}   | cut -d ' ' -f 3) \
+   && apt purge -y $wrongDep
 
 # COPY PLV8
 COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so
