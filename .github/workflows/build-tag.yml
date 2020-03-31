@@ -1,4 +1,4 @@
-name: Publish Docker Latest
+name: Publish Docker Tag
 on:
   release:
     types: [published, created, edited]
