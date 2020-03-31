@@ -40,7 +40,7 @@ LABEL  Maintainer="Alfredo Palhares <alfredo@palhares.me>"
 # There need to be repeadted for scope
 ARG PG_MAJOR=12
 ARG PLV8_VERSION=2.3.14
-ARG POSTGIS_VERSION=2.5
+ARG POSTGIS_VERSION=3
 
 # Its important to have the Variables in runtime
 ENV PG_CONFIG="/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config"
