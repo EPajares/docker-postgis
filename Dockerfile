@@ -1,6 +1,48 @@
 ARG PG_MAJOR=12
 
-FROM postgres:${PG_MAJOR} AS plv8builder
+FROM postgres:${PG_MAJOR} AS pgrountingBuilder
+
+ARG PG_MAJOR=12
+
+ARG PGROUTING_VERSION 2.6.3
+ENV PGROUTING_SHA256 7ebef19dc698d4e85b85274f6949e77b26fe5a2b79335589bc3fbdfca977eb0f
+
+RUN set -ex \
+ && apt update \
+ && apt install -y \
+        libboost-atomic1.67.0 \
+        libboost-chrono1.67.0 \
+        libboost-graph1.67.0 \
+        libboost-date-time1.67.0 \
+        libboost-program-options1.67.0 \
+        libboost-system1.67.0 \
+        libboost-thread1.67.0 \
+        libcgal13 \
+ && apt install -y \
+        build-essential \
+        cmake \
+        wget \
+        libboost-graph-dev \
+        libcgal-dev \
+        libpq-dev \
+        postgresql-server-dev-${PG_MAJOR} \
+ && wget -O pgrouting.tar.gz "https://github.com/pgRouting/pgrouting/archive/v${PGROUTING_VERSION}.tar.gz" \
+ && echo "$PGROUTING_SHA256 *pgrouting.tar.gz" | sha256sum -c - \
+ && mkdir -p /usr/src/pgrouting \
+ && tar \
+        --extract \
+        --file pgrouting.tar.gz \
+        --directory /usr/src/pgrouting \
+        --strip-components 1 \
+ && rm pgrouting.tar.gz \
+ && cd /usr/src/pgrouting \
+ && mkdir build \
+ && cd build \
+ && cmake .. \
+ && make \
+ && make install
+
+FROM postgres:${PG_MAJOR} AS plv8Builder
 
 # Args need to be repeated for scope
 ARG PLV8_VERSION=2.3.14
@@ -64,7 +106,7 @@ RUN apt update && apt install -y build-essential gnupg2 wget ca-certificates rpl
 # Install Set versions
 RUN apt update \
    && apt install -y "postgresql-client-${PG_MAJOR}" "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}" \
-   "postgresql-${PG_MAJOR}-postgis-${PGIS_VERSION}" "postgresql-${PG_MAJOR}-pgrouting" \
+   "postgresql-${PG_MAJOR}-postgis-${PGIS_VERSION}" \
    "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}" "postgis" \
    osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  \
    && pip3 install  psycopg2-binary pyshp pyyaml osm_humanized_opening_hours boto3
@@ -84,9 +126,17 @@ RUN wrongDep=$(dpkg -l | grep  postgresql-${PG_VERSION}-postgis- | grep --invert
    && apt purge -y $wrongDep
 
 # COPY PLV8
-COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so
-COPY --from=plv8builder /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode
-COPY --from=plv8builder /usr/share/postgresql/${PG_MAJOR}/extension /usr/share/postgresql/${PG_MAJOR}/extension
+COPY --from=plv8Builder /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so /usr/lib/postgresql/${PG_MAJOR}/lib/plv8-${PLV8_VERSION}.so
+COPY --from=plv8Builder /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode
+COPY --from=plv8Builder /usr/share/postgresql/${PG_MAJOR}/extension /usr/share/postgresql/${PG_MAJOR}/extension
+
+# Copy PGrounting
+# The .so file generated only contains masjor.minor on the file name
+# It needs to be trimmed
+COPY --from=pgrountingBuilder /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_VERSION%*.*}.so \
+   /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_VERSION%*.*}.so
+COPY --from=pgrountingBuilder /usr/lib/postgresql/${PG_MAJOR}/extension\
+   /usr/lib/postgresql/${PG_MAJOR}/extension
 
 
 # Run any additional tasks here that are too tedious to put in
