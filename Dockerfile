@@ -1,10 +1,11 @@
 ARG PG_MAJOR=12
 
-FROM postgres:${PG_MAJOR} AS pgrountingBuilder
+FROM postgres:${PG_MAJOR} AS pgroutingBuilder
 
 ARG PG_MAJOR=12
 
 ARG PGROUTING_VERSION=2.6.3
+ARG PGROUTING_MAJOR=2.6
 ENV PGROUTING_SHA256=7ebef19dc698d4e85b85274f6949e77b26fe5a2b79335589bc3fbdfca977eb0f
 
 RUN set -ex \
@@ -131,11 +132,10 @@ COPY --from=plv8Builder /usr/lib/postgresql/${PG_MAJOR}/lib/bitcode /usr/lib/pos
 COPY --from=plv8Builder /usr/share/postgresql/${PG_MAJOR}/extension /usr/share/postgresql/${PG_MAJOR}/extension
 
 # Copy PGrounting
-# The .so file generated only contains masjor.minor on the file name
-# It needs to be trimmed
-COPY --from=pgrountingBuilder /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_VERSION%*.*}.so \
-   /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_VERSION%*.*}.so
-COPY --from=pgrountingBuilder /usr/lib/postgresql/${PG_MAJOR}/extension\
+# The .so file generated only contains major or minor therefore a variable PGROUTING_MAJOR is defined
+COPY --from=pgroutingBuilder /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_MAJOR}.so \
+   /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_MAJOR}.so
+COPY --from=pgroutingBuilder /usr/lib/postgresql/${PG_MAJOR}/extension\
    /usr/lib/postgresql/${PG_MAJOR}/extension
 
 
