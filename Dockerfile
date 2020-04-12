@@ -135,8 +135,8 @@ COPY --from=plv8Builder /usr/share/postgresql/${PG_MAJOR}/extension /usr/share/p
 ARG PGROUTING_MAJOR=2.6
 COPY --from=pgroutingBuilder /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_MAJOR}.so \
    /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${PGROUTING_MAJOR}.so
-COPY --from=pgroutingBuilder /usr/lib/postgresql/${PG_MAJOR}/extension\
-   /usr/lib/postgresql/${PG_MAJOR}/extension
+COPY --from=pgroutingBuilder /usr/share/postgresql/${PG_MAJOR}/extension\
+   /usr/share/postgresql/${PG_MAJOR}/extension
 
 
 # Run any additional tasks here that are too tedious to put in
