@@ -29,7 +29,7 @@ goatcommunity/database:[postgres_version]-[postgis-version]-[plv8-version]-[revi
 
 So for example:
 
-``goatcommunity/postgis:12-2.5-2.3.14-1`` Provides PostgreSQL 12 PLV8 2.3.14
+``goatcommunity/database:12-3-2.6.3-2.3.14`` Provides PostgreSQL 12 PostGIS 3 pgrouting 2.6.3 PLV8 2.3.14
 
 **Note:** We highly recommend that you use tagged versions because
 successive minor versions of PostgreSQL write their database clusters
