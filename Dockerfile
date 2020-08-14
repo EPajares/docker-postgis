@@ -4,8 +4,8 @@ FROM postgres:${PG_MAJOR} AS pgroutingBuilder
 
 ARG PG_MAJOR=12
 
-ARG PGROUTING_VERSION=2.6.8
-ENV PGROUTING_SHA256=3f22a3b155959e40e812b31d002dcf1f00532b1b7e13eb3041d336f0ae060d76
+ARG PGROUTING_VERSION=2.6.9
+ENV PGROUTING_SHA256=86a3466030e153cd11a30d7c72e083da092e6f92a9af155d0a4e8801ca50f4c4
 
 RUN set -ex \
  && apt update \
@@ -26,7 +26,7 @@ RUN set -ex \
         libcgal-dev \
         libpq-dev \
         postgresql-server-dev-${PG_MAJOR} \
- && wget -O pgrouting.tar.gz "https://github.com/vjeranc/pgrouting/archive/v${PGROUTING_VERSION}.tar.gz" \
+ && wget -O pgrouting.tar.gz "https://github.com/goat-community/pgrouting/archive/v${PGROUTING_VERSION}.tar.gz" \
  && echo "$PGROUTING_SHA256 *pgrouting.tar.gz" | sha256sum -c - \
  && mkdir -p /usr/src/pgrouting \
  && tar \
