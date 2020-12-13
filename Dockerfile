@@ -138,6 +138,11 @@ COPY --from=pgroutingBuilder /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${
 COPY --from=pgroutingBuilder /usr/share/postgresql/${PG_MAJOR}/extension\
    /usr/share/postgresql/${PG_MAJOR}/extension
 
+#Install arraymath-extension 
+RUN cd /tmp/ && wget https://github.com/pramsey/pgsql-arraymath/archive/master.zip && cd pgsql-arraymath && make && make install
+
+#Install floatvec extension
+RUN cd /tmp/ && wget https://github.com/pjungwir/floatvec/archive/master.zip && cd floatvec && make && make install
 
 # Run any additional tasks here that are too tedious to put in
 # this dockerfile directly.
