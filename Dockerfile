@@ -112,7 +112,7 @@ RUN apt update \
 
 COPY requirements.txt /tmp
 
-RUN apt install libspatialindex-dev python-rtree && \
+RUN apt install libspatialindex-dev python-rtree -y && \
    pip3 install --upgrade pip setuptools \
    && pip3 install --user --no-cache-dir --no-warn-script-location -r /tmp/requirements.txt
 
