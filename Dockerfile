@@ -108,7 +108,7 @@ RUN apt update \
    && apt install -y "postgresql-client-${PG_MAJOR}" "postgresql-${PG_MAJOR}" "postgresql-server-dev-${PG_MAJOR}" \
    "postgresql-${PG_MAJOR}-postgis-${PGIS_VERSION}" \
    "postgresql-${PG_MAJOR}-ogr-fdw" "postgresql-plpython3-${PG_MAJOR}" "postgis" \
-   osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip  
+   osmosis osmctools osm2pgsql python3 python3-setuptools python3-pip python3-dev
 
 COPY requirements.txt /tmp
 
@@ -142,7 +142,7 @@ COPY --from=pgroutingBuilder /usr/lib/postgresql/${PG_MAJOR}/lib/libpgrouting-${
 COPY --from=pgroutingBuilder /usr/share/postgresql/${PG_MAJOR}/extension\
    /usr/share/postgresql/${PG_MAJOR}/extension
 
-#Install arraymath-extension 
+#Install arraymath-extension
 RUN cd /tmp/ && git clone https://github.com/pramsey/pgsql-arraymath && cd pgsql-arraymath && make && make install
 
 #Install floatvec extension
