@@ -14,11 +14,12 @@ marshmallow
 webargs
 pyyaml
 geobuf
+geocube
 geojson
 asyncio
 zipstream
-pyshp 
-pyyaml 
-osm_humanized_opening_hours 
+pyshp
+pyyaml
+osm_humanized_opening_hours
 boto3
 requests
