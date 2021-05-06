@@ -1,5 +1,7 @@
 pyproj==2.6
 geopandas
+geocube
+rasterio
 rtree
 psycopg2-binary
 loguru
