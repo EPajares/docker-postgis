@@ -1,0 +1,2 @@
+key_id: \"${SPACES_KEY_ID}\"
+secret_access_key: \"${SPACES_SECRET_KEY}\"

@@ -1,0 +1,5 @@
+HOST: \"postgres.${NAMESPACE}.svc.cluster.local\"
+PORT: 5432
+DB_NAME: \"${POSTGRES_DB}\"
+USER: \"${POSTGRES_USER}\"
+PASSWORD: \"${POSTGRES_PASSWORD}\"

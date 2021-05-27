@@ -1,0 +1,10 @@
+CREATE EXTENSION postgis;
+CREATE EXTENSION plv8;
+CREATE EXTENSION pgrouting with version '2.6.3';
+CREATE EXTENSION pgrouting;
+CREATE EXTENSION hstore;
+CREATE EXTENSION intarray;
+CREATE EXTENSION plpython3u;
+CREATE EXTENSION arraymath;
+CREATE EXTENSION floatvec;
+CREATE EXTENSION postgis_raster;
