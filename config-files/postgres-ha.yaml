@@ -1,0 +1,19 @@
+---
+bootstrap:
+  dcs:
+    postgresql:
+      parameters:
+        max_wal_senders : 10
+        wal_keep_segments : 250
+        superuser_reserved_connections : 10
+        min_wal_size : 2048MB
+        max_wal_size : 4GB
+        shared_buffers : 500MB
+        work_mem : 16MB
+        maintenance_work_mem : 128MB
+        wal_buffers : 1MB
+        random_page_cost : 2.0
+        xmloption : 'document'
+        max_parallel_maintenance_workers : 2
+        max_parallel_workers : 4
+        checkpoint_timeout : 30min

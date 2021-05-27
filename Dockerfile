@@ -1,6 +1,6 @@
 ARG PG_MAJOR=12
 
-FROM postgres:${PG_MAJOR} AS pgroutingBuilder
+FROM crunchydata/crunchy-postgres-ha:centos7-12.5-4.4.2 AS pgroutingBuilder
 
 ARG PG_MAJOR=12
 
