@@ -2,7 +2,7 @@
 
 ### 1. Build and push docker image
 
-* First of all you need to build this image. I've provide docker image for this purpose, it should work fine on any system. The only problem - building time. Image building consist from several stage: plv8builder, pgroutingBuilder, libsBuilder, boostBuilder and final stage - the main one. Some of these stage can take a lot of time - near 1 hr. On digital ocean droplet you provide for me - libsBuilder stage take more that 50 minutes. Because of this I recomment to build these "long-lasting" stages as separate image and then just call them during buildin main docker image. This will save a lot of time during future builds.
+* First of all you need to build this image. I've provide docker image for this purpose, it should work fine on any system. The only problem - building time. Image building consists from several stage: plv8builder, pgroutingBuilder, libsBuilder, boostBuilder and final stage - the main one. Some of these stage can take a lot of time - near 1 hr. On digital ocean droplet you provide for me - libsBuilder stage take more that 50 minutes. Because of this I recommend to build these "long-lasting" stages as separate image and then just call them during building main docker image. This will save a lot of time during future builds.
 
     Build docker image: 
 
