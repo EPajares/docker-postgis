@@ -161,7 +161,7 @@
 * Backup and restore.
     Backups from database can be taken by different ways: the simple `pg_dump` execution, through the crunchy operator or using any other way.
     Backups from crunchy operator can be taken to local storage or to any s3-compatible storage ( AWS S3, DO Space and other).
-    Full backup is taken automatically after create postgres cluster, and future backups will be taken in incremental node ( to previous backup will be added only difference between current and previous state).
+    Full backup is taken automatically after create postgres cluster, and future backups will be taken in incremental mode ( to previous backup will be added only difference between current and previous state).
 
     To perform backup which will be stored to s3 storage, cluster should be configured to use s3 as storage type for backups. It needs to be configured during creating, because after creating it can't be changed:
     
@@ -211,7 +211,7 @@
 
     ![alt text](http://img.empeek.net/1IPAPSZ.png)
 
-    Please note that backup uploading to s3 storage can take a little bit more time that it extected. First backup can take more than 5 minutes, the following backups can be taken in incremental time, so uploading time depend on data amount.
+    Please note that backup uploading to s3 storage can take a little bit more time that it extected. First backup can take more than 5 minutes, the following backups can be taken in incremental mode, so uploading time depend on data amount.
 
     Database restore can be taken in similar way:
 
