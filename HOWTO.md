@@ -41,7 +41,7 @@
         export PGO_CLIENT_KEY="${HOME?}/.pgo/pgo/client.key"
         export PGO_APISERVER_URL='https://127.0.0.1:8443'
         export PGO_NAMESPACE=pgo
-        export PATH=$PATH:/home/username/.pgo/pgo
+        export PATH=$PATH:${HOME?}/.pgo/pgo
 
         # or you can add this permanently to bashrc file
         
@@ -52,7 +52,7 @@
         export PGO_CLIENT_KEY="${HOME?}/.pgo/pgo/client.key"
         export PGO_APISERVER_URL='https://127.0.0.1:8443'
         export PGO_NAMESPACE=pgo
-        export PATH=$PATH:/home/username/.pgo/pgo
+        export PATH=$PATH:$HOME/.pgo/pgo
         EOF
         source ~/.bashrc
         
@@ -112,7 +112,345 @@
 
     ` psql -h localhost -U <user> -d <database name>`
 
+* spaces.yml and db.yaml files:
 
+    This files are injected into database pod through custom configmap mentioned earlier. They will be encrypted by Mozilla SOPS in future update. 
+
+    Their location in pod: `/pgconf`.
+
+
+* Database scaling
+    Scaling of postgres pods by crunchy operator is a pretty simple, the only think you need - tell postgres operator which cluster should be scaled: 
+    
+    ` pgo scale <cluster-name> `
+
+    It will create read-only replica based on you primary pod. Also, you can set replica count with `--replica-count`, for example:
+    
+    ` pgo scale goat --replica-count 5`
+
+    This command will create 5 read only replicas. To check availability of these replicas and primapy test use the following command:
+
+    `pgo test goat`
+
+    As a result you should see something like this: 
+
+    ```
+        cluster : goat
+            Services
+                primary (10.103.2.57:5432): UP
+                replica (10.108.222.88:5432): UP
+            Instances
+                primary (goat-5d7c697647-qwv9f): UP
+                replica (goat-bafd-575d56d496-t9k8m): UP
+                replica (goat-bfad-bc645c66b-7784x): UP
+                replica (goat-ljgl-54ccf45d6-79x2l): UP
+                replica (goat-utmq-5ff4b4cdb4-c25jl): UP
+                replica (goat-xndh-75f66bb7bc-m5znl): UP
+    ```
+    To scale down replica, you should use... `scaledown` command.
+    First of all you need to use `pgo scaledown goat --query` to get replicas names. For some reasons you couldn't use replicas names from `pgo test goat` result. It require "short" name - `<cluster name>-<first random alphanumberical set>`. What I mean: you can’t use `goat-bafd-575d56d496-t9k8m` to delete replica using `pgo scaledown`, you need to use `goat-bafd` as replica name.
+
+    Scale down example:
+    ```
+        pgo scaledown goat --target goat-bafd
+    ```
+    After execution replica will be deleted from cluster. IF you manually delete it using `kubectl delete pod goat-bafd-575d56d496-t9k8m` - postgres operator automatically recreate it from backup. 
+
+    *** Important note: when you run ` pgo scale goat` - crunchy operator will create replica from latest taken backup. So it make sense to take backup before scaling.
+
+* Backup and restore.
+    Backups from database can be taken by different ways: the simple `pg_dump` execution, through the crunchy operator or using any other way.
+    Backups from crunchy operator can be taken to local storage or to any s3-compatible storage ( AWS S3, DO Space and other).
+    Full backup is taken automatically after create postgres cluster, and future backups will be taken in incremental mode ( to previous backup will be added only difference between current and previous state).
+
+    To perform backup which will be stored to s3 storage, cluster should be configured to use s3 as storage type for backups. It needs to be configured during creating, because after creating it can't be changed:
+    
+    AWS example:
+     
+    ```
+        pgo create cluster aws-goat-cluster --pgbackrest-s3-bucket <aws s3 bucket name> \
+        --pgbackrest-s3-endpoint s3.amazonaws.com \
+        --pgbackrest-s3-key <AWS_KEY_ID> \
+        --pgbackrest-s3-key-secret <AWS_KEY_SECRET> \
+        --pgbackrest-s3-region <aws s3 region> \
+        --pgbackrest-s3-uri-style host \
+        --pgbackrest-storage-type s3 \
+        --ccp-image-tag centos7-12.5-3.0-4.5.1 \
+        --ccp-image goat-crunchy-image \
+        --ccp-image-prefix docker.io/goatcommunity
+    ```
+
+    Digital Ocean example:
+
+    ```
+        pgo create cluster do-goat-cluster --pgbackrest-s3-verify-tls=false \
+        --pgbackrest-s3-bucket < DO space name > \
+        --pgbackrest-s3-endpoint fra1.digitaloceanspaces.com \
+        --pgbackrest-s3-region fra1 \
+        --pgbackrest-s3-uri-style path \
+        --pgbackrest-s3-key < SPACES KEY ID> \
+        --pgbackrest-s3-key-secret < SPACES KEY SECRET> \
+        --pgbackrest-storage-type s3 \
+        --ccp-image-tag centos7-12.5-3.0-4.5.1 \
+        --ccp-image goat-crunchy-image \
+        --ccp-image-prefix docker.io/goatcommunity
+    ```
+
+    When you are using aws s3 bucket you need to specify `--pgbackrest-s3-region` option. AWS S3 not attached to any region unlike many other services, so you can specify any region, for example - `us-east-2`
+    Also there is option `--pgbackrest-s3-uri-style` which will have different values for DO and AWS s3 storages.
+
+    After a while cluster will be created and you will see folder with backup taken by crunchy operator in your S3 storage:
+    
+    DO:
+    ![alt text](http://img.empeek.net/1IPAMAU.png)
+
+    ![alt text](http://img.empeek.net/1IPAK0N.png)
+
+    AWS:
+    ![alt text](http://img.empeek.net/1IPAO3M.png)
+
+    ![alt text](http://img.empeek.net/1IPAPSZ.png)
+
+    Please note that backup uploading to s3 storage can take a little bit more time that it extected. First backup can take more than 5 minutes, the following backups can be taken in incremental mode, so uploading time depend on data amount.
+
+    Database restore can be taken in similar way:
+
+    ```
+        pgo create cluster aws-goat-cluster --restore-from aws-goat-cluster-old \
+        --restore-opts="--repo-type=s3" \
+        --pgbackrest-s3-bucket <aws s3 bucket name> \
+        --pgbackrest-s3-endpoint s3.amazonaws.com \
+        --pgbackrest-s3-key <AWS_KEY_ID> \
+        --pgbackrest-s3-key-secret <AWS_KEY_SECRET> \
+        --pgbackrest-s3-region <aws s3 region> \
+        --pgbackrest-s3-uri-style host \
+        --pgbackrest-storage-type s3 \
+        --ccp-image-tag centos7-12.5-3.0-4.5.1 \
+        --ccp-image goat-crunchy-image \
+        --ccp-image-prefix docker.io/goatcommunity
+    ```
+
+    After this, crunchy operator download backup from s3 storage and then, using pgbackrest create new cluster based on backup.
+    Also you can just restore cluster from backup without creating the new one:
+    `pgo restore cluster goat-cluster`.
+
+    Be aware! This command is a destructive and destroy existing cluster and recreate it.
+
+* Data persistence
+    By default postgres operator create volume where data is stored. So, if something will happened with database pod and it will be recreated - data will be restored too. The only problems that can appear - unfinished transtactions during pod crash.
+
+* Fault tolerance
+    To enable fault tolerance you need to have at least one replica, so the first step should be: 
+    
+        pgo scale goat --replica-count 5
+
+    Test the cluster:
+
+        cluster : goat
+	    Services
+            primary (10.108.37.227:5432): UP
+            replica (10.110.195.230:5432): UP
+	    Instances
+            primary (goat-5f8b6d5ff6-zkt98): UP
+            replica (goat-orgm-845cb77846-55wh2): UP
+
+    In the case where the primary is down, the first replica to notice this starts an election. Per the Raft algorithm, each available replica compares which one has the latest changes available, based upon the LSN of the latest logs received. The replica with the latest LSN wins and receives the vote of the other replica. The replica with the majority of the votes wins. In the event that two replicas’ logs have the same LSN, the tie goes to the replica that initiated the voting request.
+    Once an election is decided, the winning replica is immediately promoted to be a primary and takes a new lock in the distributed etcd cluster. If the new primary has not finished replaying all of its transactions logs, it must do so in order to reach the desired state based on the LSN. Once the logs are finished being replayed, the primary is able to accept new queries.
+    So, to test this feature lets kill primary prod: 
+        
+        kubectl delete pod -n pgo goat-5f8b6d5ff6-zkt98 
+
+    And test cluster again:
+
+        pgo test goat
+
+        cluster : goat
+	    Services
+            primary (10.108.37.227:5432): UP
+            replica (10.110.195.230:5432): UP
+	    Instances
+            replica (goat-5f8b6d5ff6-d75h7): UP
+            primary (goat-orgm-845cb77846-55wh2): UP
+
+    We can see that replica became primary after deleting primary pod and new replica was created instead previous one.
+    It more preferable to have more that one replica, because if a replica believes that a primary is down and starts an election, but the primary is actually not down, the replica will not receive enough votes to become a new primary and will go back to following and replaying the changes from the primary.
+
+* TLS configuration
+    To enale TLS in your Postgresql Clusters you need: `CA certificate`, `TLS private key`, `TLS certificate`
+
+    I will show how to create and use for enabling tls configuration, but you can test your own certificates and keys.
+
+    We first need to generate a CA:
+
+        openssl req \
+            -x509 \
+            -nodes \
+            -newkey ec \
+            -pkeyopt ec_paramgen_curve:prime256v1 \
+            -pkeyopt ec_param_enc:named_curve \
+            -sha384 \
+            -keyout ca.key \
+            -out ca.crt \
+            -days 3650 \
+            -subj "/CN=*"
+
+    Then wee need to generate TLS key and certificate or cluster.
+    We will create cluster goat in namespace pgo, so CN for out certs will be `goat.gpo`:
+
+        openssl req \
+            -new \
+            -newkey ec \
+            -nodes \
+            -pkeyopt ec_paramgen_curve:prime256v1 \
+            -pkeyopt ec_param_enc:named_curve \
+            -sha384 \
+            -keyout server.key \
+            -out server.csr \
+            -days 365 \
+            -subj "/CN=goat.pgo"
+    
+    And finally sign CA: 
+
+        openssl x509 \
+            -req \
+            -in server.csr \
+            -days 365 \
+            -CA ca.crt \
+            -CAkey ca.key \
+            -CAcreateserial \
+            -sha384 \
+            -out server.crt
+
+    Now we can create cluster with TLS enabled:
+    1. Create secrets for postgres cluster ( secrets should be in same namespace as where we deploying our cluster, name of key that is holding the CA must be `ca.crt`)
+            
+            kubectl create secret generic postgresql-ca -n pgo --from-file=ca.crt=ca.crt
+            kubectl create secret tls goat.tls -n pgo --cert=server.crt --key=server.key
+        
+    2. With these secrets we can create cluster now:
+
+            pgo create cluster goat --server-ca-secret=postgresql-ca
+                --server-tls-secret=goat.tls  
+                --ccp-image-tag centos7-12.5-3.0-4.5.1 \
+                --ccp-image goat-crunchy-image \
+                --ccp-image-prefix docker.io/goatcommunity
+
+        To force tls usage use `--tls-only` option:
+
+             pgo create cluster goat --tls-only
+                --server-ca-secret=postgresql-ca
+                --server-tls-secret=goat.tls  
+                --ccp-image-tag centos7-12.5-3.0-4.5.1 \
+                --ccp-image goat-crunchy-image \
+                --ccp-image-prefix docker.io/goatcommunity
+
+    3. Create user:
+
+            pgo create user goat  --username goat --password mysecretpassword1
+
+    4. Lets connect to database without ssl usage:
+
+            kubectl -n pgo port-forward svc/hippo 5432:5432
+
+            PGSSLMODE=disable PGPASS=mysecretpassword1 psql -h localhost -U devops postgres
+
+        After this you will error:
+
+            psql: FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "devops", database "devops", SSL off
+
+    5. Now lets try to connect with sll enabled:
+
+            PGSSLMODE=require PGPASS=mysecretpassword1 psql -h localhost -U devops postgres
+
+        And.. It connected successfully!
+
+    More detailed about ssl configuration you can read [here](https://blog.crunchydata.com/blog/set-up-tls-for-postgresql-in-kubernetes)
+
+* Monitoring.
+    To configure monitoring in "send metrics from cluster #1 > gather metrics in cluster #2" prometheus federation feature was used. 
+    To create monitoring infrasctructure  follow the next steps:
+    1. Metrics exporter for postgres cluster can be enabled using `--metrics` flag when cluster creating:
+    
+        pgo create cluster hippo --metrics
+
+    There will be created sidecar container with meterics exporter
+
+    2. Deploy crunchy metrics deployer:
+
+            kubectl apply -f monitoring/crunchy-operator-monitoring-internal.yml
+    
+    It will create pod deployer and monitoring stack in pgo namespace( prometheus, alertmanager, grafana) will be created. For prometheus and alertmanager will be created LoadBalancer service type, so we will have external Ip that can be used to configuring monitoring in external cluster.
+
+    3. Get alertmanager and prometheus external IP:
+        
+            kubectl get svc -n pgo
+
+    ![alt text](http://img.empeek.net/1K4PZOC.png)
+
+    4. Connect to to cluster #2
+
+    5. Modify configurations file for configmaps:
+
+        5.1
+        monitoring/prometheus file contains configurations for prometheus instance that will collect metrics from external prometheus and alertmanager ( in cluster #1) using federation feature
+
+        <ip> should be replaced with real external IP from step #3.
+            ---
+            global:
+            scrape_interval: 15s
+            scrape_timeout: 15s
+            evaluation_interval: 5s
+
+            scrape_configs:
+            - job_name: 'external-cluster'
+            scrape_interval: 30s
+            honor_labels: true
+            metrics_path: '/federate'
+            params:
+                'match[]':
+                - '{job="crunchy-postgres-exporter"}'
+            static_configs:
+                - targets:
+                - '<ip>:9090'
+
+            rule_files:
+            - /etc/prometheus/alert-rules.d/*.yml
+            alerting:
+            alertmanagers:
+            - scheme: http
+                static_configs:
+                - targets:
+                - "<ip>:9093"
+
+        monitoring/alertmanager.yml file contains configurations for alertmanager. To enable e-mail notification you need to modify this value and replace values with real data for smtp configuration. Or you can leave as it is and test only monitoring part.
+
+    6. Create custom configmaps. Even if alermanagert config files wasn’t modified create configmap from this file too:
+
+            kubectl create configmap crunchy-prometheus -n pgo --from-file=monitoring/prometheus.yml
+                
+            kubectl create configmap alertmanager-config -n pgo --from-file=monitoring/alertmanager.yml
+    
+    7. Create monitoring stack in cluster #2
+
+        Create namespace if not created:
+            
+            kubectl create namespace pgo
+        
+        Create stack:
+
+            kubectl apply -f monitoring/crunchy-operator-monitoring-external.yml
+
+    That’s all. You can access prometheus or grafana dashboard setting port-forwarding for this services or changing from `ClusterIP` to `LoadBalancer` value in `grafana_service_type` or `prometheus_service_type` in monitoring/crunchy-operator-monitoring-external.yml 
+
+
+
+
+    
+
+
+
+
+            
     
 
 
